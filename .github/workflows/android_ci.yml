@@ -1,16 +1,15 @@
-name: pr_code_coverage
+name: Android CI
 on:
     pull_request:
         branches:
             - main
         types: [opened, reopened, synchronize]
+    workflow_dispatch:    
 
 jobs:
-    code-coverage:
+    code-quality:
         runs-on: ubuntu-latest
-        name: Generate code coverage report
-        permissions:
-            pull-requests: write
+        name: Run lint and unit tests
 
         steps:
             - name: Checkout repository
@@ -21,8 +20,19 @@ jobs:
               with:
                   distribution: "zulu"
                   java-version: 17
-                  cache: 'gradle'
 
+            - name: Setup Gradle
+              uses: gradle/actions/setup-gradle@v4
+
+            - name: Run ktlint
+              run: ./gradlew lintKotlin
+
+            - name: Run detekt
+              run: ./gradlew detekt
+
+            - name: Run tests
+              run: ./gradlew test    
+              
             - name: Generate coverage report
               run: ./gradlew jacocoCoreDebugCodeCoverage
 
@@ -37,4 +47,23 @@ jobs:
                   min-coverage-changed-files: 60
                   title: Code Coverage
                   update-comment: true
-                  debug-mode: true
+                  debug-mode: true   
+    build:
+      runs-on: ubuntu-latest
+      name: build app
+      needs: code-quality
+      steps: 
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Setup JDK environment
+              uses: actions/setup-java@v4
+              with:
+                  distribution: "zulu"
+                  java-version: 17
+
+            - name: Setup Gradle
+              uses: gradle/actions/setup-gradle@v4    
+              
+            - name: build app  
+              run: ./gradlew assembleDebug
