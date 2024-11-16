@@ -4,17 +4,22 @@ style:
     MaxLineLength:
         active: true
     LoopWithTooManyJumpStatements:
-        active: false
+        active: true
     WildcardImport:
         active: true
     ReturnCount:
-        active: false
+        active: true
     UnusedPrivateProperty:
         active: true
     UnusedParameter:
         active: true
     UtilityClassWithPublicConstructor:
-        active: false
+        active: true
+
+naming:
+    FunctionNaming:
+        active: true
+        ignoreAnnotated: ["Composable"]
 
 complexity:
     TooManyFunctions:
@@ -44,4 +49,4 @@ empty-blocks:
 
 performance:
     SpreadOperator:
-        active: false
+        active: true

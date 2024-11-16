@@ -17,6 +17,7 @@ plugins {
     id("io.gitlab.arturbosch.detekt")
     id("com.google.devtools.ksp") version "2.0.0-1.0.22" apply true
     id("de.mannodermaus.android-junit5") version "1.11.2.0"
+    id("org.jetbrains.kotlin.plugin.compose") version "2.0.0"
     id("jacoco")
 }
 
@@ -53,6 +54,7 @@ android {
     buildFeatures {
         viewBinding = true
         buildConfig = true
+        compose = true
     }
 
     signingConfigs {
@@ -113,14 +115,15 @@ android {
         val unitTests = "test${variantName}UnitTest"
         val androidTests = "connected${variantName}AndroidTest"
 
-        val exclusions = listOf(
-            // Data binding.
-            "**/R.class",
-            "**/R\$*.class",
-            "**/BuildConfig.*",
-            "**/Manifest*.*",
-            "**/*Test*.*"
-        )
+        val exclusions =
+            listOf(
+                // Data binding.
+                "**/R.class",
+                "**/R\$*.class",
+                "**/BuildConfig.*",
+                "**/Manifest*.*",
+                "**/*Test*.*",
+            )
 
         tasks.register<JacocoReport>("jacoco${variantName}CodeCoverage") {
             dependsOn(listOf(unitTests, androidTests))
@@ -133,23 +136,29 @@ android {
             // Set source directories to the main source directory.
             sourceDirectories.setFrom(layout.projectDirectory.dir("src/main"))
             // Set class directories to compiled Java and Kotlin classes, excluding specified exclusions.
-            classDirectories.setFrom(files(
-                fileTree(layout.buildDirectory.dir("intermediates/javac/")) {
-                    exclude(exclusions)
-                },
-                fileTree(layout.buildDirectory.dir("tmp/kotlin-classes/")) {
-                    exclude(exclusions)
-                }
-            ))
+            classDirectories.setFrom(
+                files(
+                    fileTree(layout.buildDirectory.dir("intermediates/javac/")) {
+                        exclude(exclusions)
+                    },
+                    fileTree(layout.buildDirectory.dir("tmp/kotlin-classes/")) {
+                        exclude(exclusions)
+                    },
+                ),
+            )
             // Collect execution data from .exec and .ec files generated during test execution.
-            executionData.setFrom(files(
-                fileTree(layout.buildDirectory) { include(listOf("**/*.exec", "**/*.ec")) }
-            ))
+            executionData.setFrom(
+                files(
+                    fileTree(layout.buildDirectory) { include(listOf("**/*.exec", "**/*.ec")) },
+                ),
+            )
         }
     }
 }
 
 dependencies {
+    detektPlugins("io.nlopez.compose.rules:detekt:0.4.17")
+    lintChecks("com.slack.lint.compose:compose-lint-checks:1.4.2")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.activity:activity-ktx:1.9.2")
     implementation("androidx.navigation:navigation-fragment-ktx:2.8.0")
@@ -167,6 +176,16 @@ dependencies {
     implementation("androidx.cardview:cardview:1.0.0")
     implementation("androidx.viewpager2:viewpager2:1.1.0")
     implementation("com.google.android.play:core:1.10.0")
+
+    val composeBom = platform("androidx.compose:compose-bom:2024.10.00")
+    implementation(composeBom)
+    androidTestImplementation(composeBom)
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    debugImplementation("androidx.compose.ui:ui-tooling")
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
+    implementation("androidx.activity:activity-compose")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junit5Version")
     testImplementation("io.mockk:mockk:$mockkVersion")
